@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 /* ============================================================
-   Base — engineering-paper desktop (ported from pauljunsukhan.com)
+   Base — bare vellum desk texture
    ============================================================ */
 * {
   box-sizing: border-box;
@@ -31,22 +31,13 @@ body {
   line-height: var(--lh-normal);
   color: var(--text);
   background-color: var(--bg);
-  background-image: linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 22px 22px;
-  background-attachment: fixed, fixed;
+  background-image: var(--tex-vellum);
+  background-size: 520px 520px;
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
 }
 body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(circle at 50% 25%, rgba(255, 255, 240, 0.16) 0%, rgba(255, 240, 200, 0.24) 100%);
-}
-body.dark::after {
-  background: radial-gradient(circle at 50% 25%, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.26) 100%);
+  content: none;
 }
 
 /* ============================================================
@@ -208,17 +199,12 @@ body.dark::after {
 .rolodex-stage::before {
   z-index: 0;
   background-color: var(--bg);
-  background-image: linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 22px 22px;
-  background-attachment: fixed, fixed;
+  background-image: var(--tex-vellum);
+  background-size: 520px 520px;
+  background-attachment: fixed;
 }
 .rolodex-stage::after {
-  z-index: 1;
-  background: radial-gradient(circle at 50% 25%, rgba(255, 255, 240, 0.16) 0%, rgba(255, 240, 200, 0.24) 100%);
-}
-body.dark .rolodex-stage::after {
-  background: radial-gradient(circle at 50% 25%, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.26) 100%);
+  content: none;
 }
 .rolodex-pathbar {
   position: absolute;
