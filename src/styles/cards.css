@@ -1,0 +1,242 @@
+/* ============================================================
+   cards.css — book-cloth material card with real relief.
+   Square corners (no curves) but tactile/3D like the Haptica system:
+   raised cloth plate, photo recessed into the weave, letterpressed text.
+   Owned here as overrides so it never collides with Codex's edits.
+   ============================================================ */
+
+/* 1) Straight lines everywhere — no curves. */
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
+/* 2) The card is a raised book-cloth plate. Let the weave show, and give it
+      material relief: top highlight + bottom inner-shade + extruded edge + drop. */
+.card-face {
+  padding: 20px !important;
+  background-image:
+    linear-gradient(rgba(238, 236, 230, 0.28), rgba(228, 224, 216, 0.4)),
+    var(--tex-book-cloth) !important;
+  background-size: cover, 360px !important;
+  background-repeat: no-repeat, repeat !important;
+  background-position: center !important;
+  color: #2b2620 !important;
+  border: 1px solid #3a2f22 !important;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 251, 243, 0.6),
+    inset 0 -4px 7px rgba(60, 45, 25, 0.2),
+    inset 2px 0 0 rgba(255, 251, 243, 0.22),
+    inset -2px 0 0 rgba(60, 45, 25, 0.14),
+    0 2px 0 rgba(58, 47, 34, 0.55),
+    0 18px 34px -14px rgba(40, 30, 15, 0.62) !important;
+}
+
+/* 3) Balanced square photo, recessed into the cloth like a mounted plate. */
+.card-top {
+  position: relative !important;
+  display: block !important;
+  text-align: center;
+  margin: 0 0 16px !important;
+}
+.card-photo {
+  width: 172px !important;
+  height: 172px !important;
+  margin: 0 auto !important;
+  object-fit: cover !important;
+  display: block !important;
+  border: 1px solid #241f18 !important;
+  box-shadow:
+    inset 0 4px 11px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 2px rgba(255, 251, 243, 0.16),
+    0 1px 0 rgba(255, 251, 243, 0.5),
+    2px 3px 0 rgba(40, 30, 15, 0.28) !important;
+  background: #241f18;
+  filter: saturate(0.96) contrast(1.04);
+}
+.card-photo-fallback {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display) !important;
+  font-size: 78px !important;
+  color: var(--bg) !important;
+  background: linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.5)), var(--tex-leather) !important;
+  background-size: cover !important;
+}
+
+/* MOX stamp — letterpressed mono tag on the cloth, top-right corner. */
+.card-stamp {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  font-family: var(--font-primary) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.1em !important;
+  color: #6b5a3f !important;
+  background: transparent !important;
+  padding: 0 !important;
+  text-shadow: 0 1px 0 rgba(255, 251, 243, 0.65) !important;
+}
+
+/* 4) Letterpressed datasheet text on the cloth. */
+.card-title {
+  font-family: var(--font-body) !important;
+  font-weight: 700;
+  font-size: 23px !important;
+  line-height: 1.1 !important;
+  color: #2b2620 !important;
+  text-shadow: 0 1px 0 rgba(255, 251, 243, 0.6) !important;
+}
+.card-slug {
+  color: #8a7a5c !important;
+  text-shadow: 0 1px 0 rgba(255, 251, 243, 0.5) !important;
+}
+/* redundant with the interest chips below — hide to keep the card balanced */
+.card-desc {
+  display: none !important;
+}
+/* keep interest chips to ~2 rows so tall cards don't clip */
+.card-tags {
+  flex-shrink: 0 !important; /* never let the chip row get crushed to 0 */
+  max-height: 54px !important;
+  overflow: hidden !important;
+}
+/* hide empty interest chips (members with blank interest entries) */
+.card-tags li:empty {
+  display: none !important;
+}
+
+/* Offices: larger profile pics in the office-group card. */
+.office-avatars img,
+.office-avatars span {
+  width: 92px !important;
+  height: 92px !important;
+}
+
+/* ============================================================
+   "Make it beautiful" pass — lean into the Haptica materials:
+   paper desk -> leather tray -> book-cloth cards -> brass hardware.
+   ============================================================ */
+
+/* No material backing — just a soft drop shadow under the card. */
+.drum-shadow {
+  background: none !important;
+  background-image: none !important;
+  border: none !important;
+  opacity: 1 !important;
+  box-shadow: 0 26px 48px -30px rgba(40, 28, 12, 0.45) !important;
+}
+
+/* (brass active tab removed — too much; using the default dark tab) */
+
+/* Shorter card — trims the empty book-cloth below the content. */
+.rolodex-machine {
+  --card-h: clamp(372px, 50vh, 432px) !important;
+}
+
+/* iPhone: drop the decorative menu items, fit the tabs, tighten the bar. */
+@media (max-width: 640px) {
+  .menu-bar .mi {
+    display: flex !important;
+    padding: 0 7px !important;
+  }
+  .menu-bar .mi:nth-of-type(n + 3),
+  .menu-bar .clock {
+    display: none !important;
+  }
+  .menu-bar {
+    width: 100% !important;
+    overflow: hidden !important;
+    padding: 0 8px !important;
+  }
+  .brand-logo {
+    margin-right: 8px !important;
+    flex: 0 0 auto !important;
+  }
+  .menu-bar .toggle {
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    flex: 0 0 auto !important;
+  }
+  .cat-bar {
+    padding: 10px 8px !important;
+  }
+  .cat-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 340px !important;
+    gap: 2px !important;
+    padding: 3px !important;
+  }
+  .cat-tab {
+    min-width: 0 !important;
+    justify-content: center !important;
+    padding: 5px 3px !important;
+    font-size: 10px !important;
+    gap: 3px !important;
+    letter-spacing: 0.035em !important;
+    white-space: nowrap !important;
+  }
+  .cat-tab-count {
+    font-size: 11px !important;
+  }
+  .card-photo {
+    width: min(42vw, 136px) !important;
+    height: min(42vw, 136px) !important;
+  }
+  .card-photo-fallback {
+    font-size: 56px !important;
+  }
+  .card-top {
+    margin-bottom: 10px !important;
+  }
+  .card-title {
+    font-size: 20px !important;
+  }
+  .card-tags {
+    max-height: 44px !important;
+  }
+  .office-avatars img,
+  .office-avatars span {
+    width: 58px !important;
+    height: 58px !important;
+  }
+}
+.card-tags li {
+  border: 1px solid #3a2f22 !important;
+  background: rgba(255, 251, 243, 0.2) !important;
+  color: #2b2620 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 251, 243, 0.45), 0 1px 0 rgba(58, 47, 34, 0.3) !important;
+  text-shadow: 0 1px 0 rgba(255, 251, 243, 0.4) !important;
+}
+.card-specs {
+  border-top: 1px solid rgba(58, 47, 34, 0.45) !important;
+  box-shadow: 0 -1px 0 rgba(255, 251, 243, 0.55) !important;
+}
+.card-specs dt {
+  color: #8a7a5c !important;
+}
+.card-specs dd {
+  color: #2b2620 !important;
+  text-shadow: 0 1px 0 rgba(255, 251, 243, 0.5) !important;
+}
+/* cap specs at 3 rows — drops the long contact URL and prevents clipping */
+.card-specs > div:nth-of-type(n + 4) {
+  display: none !important;
+}
+
+/* Alphabet rail: wrap into a second column when it's too tall for the screen
+   (replaces scrolling). One column when it fits, two when it doesn't. */
+.alpha-index {
+  /* pin to the right, clear of the centered card (don't rely on --card-w) */
+  left: auto !important;
+  right: max(8px, calc(50% - 220px)) !important;
+  flex-flow: column wrap !important;
+  max-height: calc(100vh - 120px) !important;
+  gap: 3px 6px !important;
+  overflow: visible !important;
+}

@@ -1,0 +1,23 @@
+node_modules
+dist
+dist-ssr
+.DS_Store
+.playwright-mcp/
+*.local
+.vite
+*.log
+.env
+.env.*
+!.env.example
+reference/
+
+# Local design/test captures.
+/card-*.png
+/mobile-*.png
+/office-card.png
+/person-card-fixed.png
+/rail-fixed.png
+/rolodex-v1.png
+/v2-*.png
+/v3-*.png
+/v4-*.png

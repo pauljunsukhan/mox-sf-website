@@ -1,0 +1,61 @@
+/* Design tokens ported from pauljunsukhan.com (fonts.css + global.css) so the
+   demo matches Paul's house style exactly. */
+:root {
+  /* Type */
+  --font-primary: 'Courier New', 'Courier', monospace;
+  --font-menu: 'Chicago', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-body: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
+  --font-display: 'VT323', 'Courier New', monospace;
+
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-base: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 18px;
+  --fs-2xl: 24px;
+
+  --ls-tight: 0.05em;
+  --ls-normal: 0.1em;
+  --ls-wide: 0.2em;
+
+  --lh-tight: 1.2;
+  --lh-normal: 1.5;
+  --lh-loose: 1.8;
+
+  /* Color — "aged paper" light theme */
+  --primary: #2b2b2b;
+  --secondary: #008b8b; /* vintage teal */
+  --accent: #d4a017; /* mustard */
+  --bg: #f5e6d3; /* aged paper */
+  --text: #2b2b2b;
+  --menu-bg: #f5e6d3;
+  --window-bg: #fff9f0; /* warm white */
+  --window-border: #2b2b2b;
+  --grid: rgba(70, 40, 20, 0.1); /* engineering-paper grid */
+  --copper: #a55b34;
+  --brass: #b8893b;
+
+  /* Layout */
+  --max-width: 1040px;
+  --spacing: 2rem;
+  --window-margin: 40px;
+}
+
+body.dark {
+  --primary: #e6e6e6;
+  --secondary: #00a3a3;
+  --accent: #e0b73c;
+  --bg: #1b1b1b;
+  --text: #e0e0e0;
+  --menu-bg: #2b2b2b;
+  --window-bg: #232323;
+  --window-border: #4a4a4a;
+  --grid: rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 768px) {
+  :root {
+    --window-margin: 12px;
+    --spacing: 1.1rem;
+  }
+}
