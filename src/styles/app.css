@@ -287,6 +287,8 @@ body.dark .rolodex-stage::after {
   backface-visibility: hidden;
   will-change: transform;
   pointer-events: auto;
+  touch-action: none;
+  user-select: none;
 }
 .slot.is-flipped-over {
   filter: brightness(0.9) saturate(0.94);
@@ -315,6 +317,7 @@ body.dark .rolodex-stage::after {
   cursor: pointer;
   overflow: hidden;
   pointer-events: auto;
+  touch-action: none;
 }
 .preview-card::before {
   content: none;

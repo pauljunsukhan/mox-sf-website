@@ -6,9 +6,19 @@ import { OfficeCard } from './OfficeCard'
 const TAIL_LIMIT = 14
 const TAIL_FADE_START = 8
 const WHEEL_PX_PER_CARD = 180
+const TOUCH_PX_PER_CARD = 74
 const ROLODEX_SURFACE_SELECTOR = '.slot, .preview-card, .alpha-index, .cat-tabs'
 
 type SlotStyle = CSSProperties
+type DragState = {
+  pointerId: number
+  startY: number
+  startPos: number
+  lastY: number
+  lastTime: number
+  velocity: number
+  didDrag: boolean
+}
 
 function memberNo(no: number): string {
   return String(no).padStart(4, '0')
@@ -50,6 +60,8 @@ export function Rolodex({
   const [isArmed, setIsArmed] = useState(false)
   const [isCompact, setIsCompact] = useState(false)
   const isArmedRef = useRef(false)
+  const dragRef = useRef<DragState | null>(null)
+  const suppressClickRef = useRef(false)
 
   const armRolodex = () => {
     isArmedRef.current = true
@@ -168,10 +180,76 @@ export function Rolodex({
     setVirtualPos(next)
   }
 
+  const consumeSuppressedClick = () => {
+    if (!suppressClickRef.current) return false
+    suppressClickRef.current = false
+    return true
+  }
+
   const handleStagePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!eventHitsRolodexSurface(event)) return
 
     armRolodex()
+    if (count <= 1 || !pointIsInside(trayRef.current, event.clientX, event.clientY)) return
+
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startPos: posRef.current,
+      lastY: event.clientY,
+      lastTime: performance.now(),
+      velocity: 0,
+      didDrag: false,
+    }
+
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      /* Pointer capture is a progressive enhancement here. */
+    }
+  }
+
+  const handleStagePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+
+    const deltaY = event.clientY - drag.startY
+    if (!drag.didDrag && Math.abs(deltaY) < 5) return
+
+    drag.didDrag = true
+    event.preventDefault()
+
+    const nextPos = drag.startPos - deltaY / TOUCH_PX_PER_CARD
+    setVirtualPos(nextPos)
+
+    const now = performance.now()
+    const dt = Math.max(1, now - drag.lastTime)
+    drag.velocity = -((event.clientY - drag.lastY) / TOUCH_PX_PER_CARD) * (16.67 / dt)
+    drag.lastY = event.clientY
+    drag.lastTime = now
+  }
+
+  const finishPointerDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+
+    dragRef.current = null
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    } catch {
+      /* Ignore browsers that already released capture. */
+    }
+
+    if (!drag.didDrag) return
+
+    event.preventDefault()
+    suppressClickRef.current = true
+    window.setTimeout(() => {
+      suppressClickRef.current = false
+    }, 0)
+
+    const momentum = clamp(drag.velocity * 3.2, -3, 3)
+    setVirtualPos(Math.round(posRef.current + momentum))
   }
 
   const tailLimit = isCompact ? 9 : TAIL_LIMIT
@@ -184,7 +262,14 @@ export function Rolodex({
       ref={sectionRef}
       aria-label="Mox members rolodex"
     >
-      <div className="rolodex-stage" ref={stageRef} onPointerDown={handleStagePointerDown}>
+      <div
+        className="rolodex-stage"
+        ref={stageRef}
+        onPointerDown={handleStagePointerDown}
+        onPointerMove={handleStagePointerMove}
+        onPointerUp={finishPointerDrag}
+        onPointerCancel={finishPointerDrag}
+      >
         <div className="rolodex-pathbar" aria-hidden="true">
           Macintosh HD ▸ Mox ▸ Members.rolodex
         </div>
@@ -239,7 +324,13 @@ export function Rolodex({
                       type="button"
                       className="preview-card"
                       data-rolodex-index={i}
-                      onClick={() => goTo(i)}
+                      onClick={(event) => {
+                        if (consumeSuppressedClick()) {
+                          event.preventDefault()
+                          return
+                        }
+                        goTo(i)
+                      }}
                       aria-label={`View ${item.title}`}
                     >
                       <span className="preview-main">
@@ -263,7 +354,13 @@ export function Rolodex({
                   data-rolodex-index={index}
                   className={letter === activeAlpha ? 'is-current' : ''}
                   aria-current={letter === activeAlpha ? 'true' : undefined}
-                  onClick={() => goTo(index)}
+                  onClick={(event) => {
+                    if (consumeSuppressedClick()) {
+                      event.preventDefault()
+                      return
+                    }
+                    goTo(index)
+                  }}
                 >
                   {letter}
                 </button>
