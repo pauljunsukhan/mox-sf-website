@@ -142,8 +142,8 @@ export const members: Member[] = [
     "role": "Operations Manager",
     "location": "Staff",
     "since": "",
-    "focus": "EVENTS and applied phenomenology",
-    "interestText": "EVENTS and applied phenomenology",
+    "focus": "hosting sick talks and applied phenomenology, metacognition",
+    "interestText": "hosting sick talks and applied phenomenology, metacognition",
     "interests": [
       "EVENTS",
       "applied phenomenology"

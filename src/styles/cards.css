@@ -240,3 +240,70 @@
   gap: 3px 6px !important;
   overflow: visible !important;
 }
+
+/* ============================================================
+   Staff cards — full detail: role, "is into" bio, contact-for, email.
+   ============================================================ */
+.card--staff .card-photo {
+  width: 134px !important;
+  height: 134px !important;
+}
+.card-staff {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 2px;
+}
+.card-role {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.2;
+  color: #4a4233;
+}
+.card-bio {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  line-height: 1.42;
+  color: #3a352d;
+  text-shadow: 0 1px 0 rgba(255, 251, 243, 0.4);
+}
+.card-contact-label {
+  display: block;
+  margin-bottom: 4px;
+  font-family: var(--font-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-size: 9.5px;
+  color: #8a7a5c;
+}
+.card-contact-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+.card-contact-list li {
+  font-family: var(--font-primary);
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: #2b2620;
+}
+.card-contact-list li:not(:last-child)::after {
+  content: '·';
+  margin: 0 7px;
+  color: #a3855b;
+}
+.card-email {
+  font-family: var(--font-primary);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--copper) !important;
+  text-decoration: none;
+}
+.card-email:hover {
+  text-decoration: underline;
+}
