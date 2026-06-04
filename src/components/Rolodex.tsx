@@ -6,14 +6,15 @@ import { OfficeCard } from './OfficeCard'
 const TAIL_LIMIT = 14
 const TAIL_FADE_START = 8
 const WHEEL_PX_PER_CARD = 180
-const TOUCH_PX_PER_CARD = 74
-const ROLODEX_SURFACE_SELECTOR = '.slot, .preview-card, .alpha-index, .cat-tabs'
+const TOUCH_PX_PER_CARD = 66
+const ROLODEX_SURFACE_SELECTOR = '.slot, .preview-card, .alpha-index, .cat-tabs, .rolodex-stepper'
 
 type SlotStyle = CSSProperties
 type DragState = {
   pointerId: number
   startY: number
   startPos: number
+  tapIndex?: number
   lastY: number
   lastTime: number
   velocity: number
@@ -36,6 +37,14 @@ function pointIsInside(element: Element | null, x: number, y: number): boolean {
   if (!element) return false
   const rect = element.getBoundingClientRect()
   return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+}
+
+function previewIndexFromTarget(target: EventTarget | null): number | undefined {
+  if (!(target instanceof Element)) return undefined
+  const preview = target.closest<HTMLButtonElement>('.preview-card')
+  if (!preview) return undefined
+  const index = Number(preview.dataset.rolodexIndex)
+  return Number.isInteger(index) ? index : undefined
 }
 
 export function Rolodex({
@@ -62,6 +71,7 @@ export function Rolodex({
   const isArmedRef = useRef(false)
   const dragRef = useRef<DragState | null>(null)
   const suppressClickRef = useRef(false)
+  const suppressControlClickRef = useRef(false)
 
   const armRolodex = () => {
     isArmedRef.current = true
@@ -180,22 +190,49 @@ export function Rolodex({
     setVirtualPos(next)
   }
 
+  const stepBy = (direction: number) => {
+    if (count <= 1) return
+    armRolodex()
+    setVirtualPos(Math.round(posRef.current) + direction)
+  }
+
   const consumeSuppressedClick = () => {
+    if (suppressControlClickRef.current) {
+      suppressControlClickRef.current = false
+      return true
+    }
     if (!suppressClickRef.current) return false
     suppressClickRef.current = false
     return true
+  }
+
+  const handleJumpPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, index: number) => {
+    event.preventDefault()
+    event.stopPropagation()
+    suppressControlClickRef.current = true
+    goTo(index)
+  }
+
+  const handleStepPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, direction: number) => {
+    event.preventDefault()
+    event.stopPropagation()
+    suppressControlClickRef.current = true
+    stepBy(direction)
   }
 
   const handleStagePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!eventHitsRolodexSurface(event)) return
 
     armRolodex()
-    if (count <= 1 || !pointIsInside(trayRef.current, event.clientX, event.clientY)) return
+    const tapIndex = previewIndexFromTarget(event.target)
+    const canDragFromPoint = pointIsInside(trayRef.current, event.clientX, event.clientY) || tapIndex !== undefined
+    if (count <= 1 || !canDragFromPoint) return
 
     dragRef.current = {
       pointerId: event.pointerId,
       startY: event.clientY,
       startPos: posRef.current,
+      tapIndex,
       lastY: event.clientY,
       lastTime: performance.now(),
       velocity: 0,
@@ -240,7 +277,17 @@ export function Rolodex({
       /* Ignore browsers that already released capture. */
     }
 
-    if (!drag.didDrag) return
+    if (!drag.didDrag) {
+      if (drag.tapIndex !== undefined) {
+        event.preventDefault()
+        suppressClickRef.current = true
+        window.setTimeout(() => {
+          suppressClickRef.current = false
+        }, 0)
+        goTo(drag.tapIndex)
+      }
+      return
+    }
 
     event.preventDefault()
     suppressClickRef.current = true
@@ -248,7 +295,7 @@ export function Rolodex({
       suppressClickRef.current = false
     }, 0)
 
-    const momentum = clamp(drag.velocity * 3.2, -3, 3)
+    const momentum = clamp(drag.velocity * 7.5, -8, 8)
     setVirtualPos(Math.round(posRef.current + momentum))
   }
 
@@ -346,7 +393,10 @@ export function Rolodex({
           </div>
 
           {letters.length > 1 && (
-            <nav className="alpha-index" aria-label="Rolodex alphabetical index">
+            <nav
+              className={`alpha-index${letters.length > 12 ? ' is-long' : ''}`}
+              aria-label="Rolodex alphabetical index"
+            >
               {letters.map(({ letter, index }) => (
                 <button
                   key={letter}
@@ -354,6 +404,7 @@ export function Rolodex({
                   data-rolodex-index={index}
                   className={letter === activeAlpha ? 'is-current' : ''}
                   aria-current={letter === activeAlpha ? 'true' : undefined}
+                  onPointerDown={(event) => handleJumpPointerDown(event, index)}
                   onClick={(event) => {
                     if (consumeSuppressedClick()) {
                       event.preventDefault()
@@ -367,6 +418,41 @@ export function Rolodex({
               ))}
             </nav>
           )}
+
+          <div className="rolodex-stepper" aria-label="Move one card">
+            <button
+              type="button"
+              onPointerDown={(event) => handleStepPointerDown(event, -1)}
+              onClick={(event) => {
+                if (consumeSuppressedClick()) {
+                  event.preventDefault()
+                  return
+                }
+                stepBy(-1)
+              }}
+              disabled={active <= 0}
+              aria-label="Previous card"
+              title="Previous card"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              onPointerDown={(event) => handleStepPointerDown(event, 1)}
+              onClick={(event) => {
+                if (consumeSuppressedClick()) {
+                  event.preventDefault()
+                  return
+                }
+                stepBy(1)
+              }}
+              disabled={active >= count - 1}
+              aria-label="Next card"
+              title="Next card"
+            >
+              ↓
+            </button>
+          </div>
         </div>
 
       </div>

@@ -21,61 +21,42 @@ function publicAssetUrl(path: string): string {
 }
 
 export function OfficeCard({ item }: { item: OfficeRolodexItem }) {
-  const handle = item.office.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
-  const shownPeople = item.people.slice(0, 5)
-  const focusTags = Array.from(
-    new Set(item.people.flatMap((person) => person.interests).filter(Boolean)),
-  ).slice(0, 3)
+  const shownPeople = item.people.slice(0, 6)
 
   return (
     <article className="card office-card">
       <div className="card-inner">
         <div className="card-face card-front">
-          <div className="card-top">
-            <div className="office-avatars" aria-hidden="true">
-              {shownPeople.slice(0, 4).map((person) => {
-                const image = publicAssetUrl(person.localImage || person.image)
-                return image ? (
-                  <img key={person.id} src={image} alt="" />
-                ) : (
-                  <span key={person.id}>{initials(person.name)}</span>
-                )
-              })}
-            </div>
-            <span className="card-stamp">MOX · {memberNo(item.no)}</span>
-          </div>
+          <span className="card-stamp">MOX · {memberNo(item.no)}</span>
           <h3 className="card-title">{item.office}</h3>
-          <div className="card-slug">{handle}</div>
-          <p className="card-desc">
-            <span>{item.people.length}</span> people in {item.location || 'a private office'}.
-          </p>
-          {focusTags.length > 0 && (
-            <ul className="card-tags" aria-label={`${item.office} interests`}>
-              {focusTags.map((interest) => (
-                <li key={interest}>{interest}</li>
-              ))}
-            </ul>
-          )}
-          <ul className="office-roster" aria-label={`${item.office} people`}>
-            {shownPeople.map((person) => (
-              <li key={person.id}>
-                <span>{person.name}</span>
-                <small>{person.interestText || person.website || 'Office member'}</small>
-              </li>
-            ))}
+          <div className="office-meta">
+            {item.location && <span className="office-room">{item.location}</span>}
+            <span className="office-count">
+              {item.people.length === 1 ? '1 person' : `${item.people.length} people`}
+            </span>
+          </div>
+          <ul className="office-people" aria-label={`${item.office} people`}>
+            {shownPeople.map((person) => {
+              const image = publicAssetUrl(person.localImage || person.image)
+              return (
+                <li key={person.id}>
+                  {image ? (
+                    <img className="office-person-photo" src={image} alt="" />
+                  ) : (
+                    <span className="office-person-photo office-person-fallback">
+                      {initials(person.name)}
+                    </span>
+                  )}
+                  <span className="office-person-text">
+                    <span className="office-person-name">{person.name}</span>
+                    {person.interestText && (
+                      <span className="office-person-bio">{person.interestText}</span>
+                    )}
+                  </span>
+                </li>
+              )
+            })}
           </ul>
-          <dl className="card-specs office-specs">
-            {item.location && (
-              <div>
-                <dt>Room</dt>
-                <dd>{item.location}</dd>
-              </div>
-            )}
-            <div>
-              <dt>People</dt>
-              <dd>{item.people.length}</dd>
-            </div>
-          </dl>
         </div>
       </div>
     </article>

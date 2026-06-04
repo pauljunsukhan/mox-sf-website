@@ -29,6 +29,11 @@ export function MemberCard({ member }: { member: Member }) {
   const details = (
     member.category === 'programs'
       ? [['Program', member.affiliation || member.role]]
+      : member.category === 'offices'
+        ? [
+            ['Affiliation', member.affiliation || member.section || member.role],
+            ['Office', member.location],
+          ]
       : member.category === 'members'
         ? [['Affiliation', member.affiliation]]
         : [
@@ -81,12 +86,10 @@ export function MemberCard({ member }: { member: Member }) {
           ) : (
             <>
               <div className="card-slug">{handle}</div>
-              {member.interests.length > 0 && (
-                <ul className="card-tags" aria-label={`${member.name} interests`}>
-                  {member.interests.map((interest) => (
-                    <li key={interest}>{interest}</li>
-                  ))}
-                </ul>
+              {member.interestText && (
+                <p className="card-bio">
+                  {member.name} is into {member.interestText}
+                </p>
               )}
               {details.length > 0 && (
                 <dl className="card-specs">

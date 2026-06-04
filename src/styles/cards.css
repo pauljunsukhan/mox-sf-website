@@ -232,14 +232,52 @@
   left: auto !important;
   right: max(8px, calc(50% - 220px)) !important;
   bottom: auto !important;
-  /* center on the CARD (which sits at --axis-y), not the machine's 50% */
-  top: calc(var(--axis-y) - var(--card-pivot-y) + var(--card-h) / 2) !important;
-  transform: translateY(-50%) !important;
+  /* Keep the rail in the free band below the sticky tabs. */
+  top: max(176px, calc(var(--axis-y) - var(--card-pivot-y) + 16px)) !important;
+  transform: none !important;
   flex-flow: column nowrap !important;
   height: auto !important;
   max-height: none !important;
   gap: 3px !important;
   overflow: visible !important;
+  scrollbar-width: none !important;
+}
+.alpha-index::-webkit-scrollbar {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .alpha-index.is-long {
+    height: calc(100svh - 250px) !important;
+    max-height: none !important;
+    justify-content: space-between !important;
+    gap: 0 !important;
+    padding: 4px !important;
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+  }
+  .alpha-index button {
+    width: 22px !important;
+    height: 14px !important;
+    font-size: 9px !important;
+  }
+}
+
+@media (max-width: 640px) and (max-height: 720px) {
+  .alpha-index.is-long {
+    height: calc(100svh - 234px) !important;
+    padding: 3px !important;
+  }
+  .alpha-index button {
+    height: 12px !important;
+    font-size: 8px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .rolodex-stepper {
+    display: none !important;
+  }
 }
 
 /* ============================================================
@@ -269,6 +307,10 @@
   line-height: 1.42;
   color: #3a352d;
   text-shadow: 0 1px 0 rgba(255, 251, 243, 0.4);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .card-contact-label {
   display: block;
@@ -307,4 +349,74 @@
 }
 .card-email:hover {
   text-decoration: underline;
+}
+
+/* ============================================================
+   Office cards — one clean people list (avatar + name + bio).
+   ============================================================ */
+.office-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 5px 0 14px;
+  font-family: var(--font-primary);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #8a7a5c;
+}
+.office-people {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.office-people li {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+.office-person-photo {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border: 1px solid #241f18;
+  background: #241f18;
+  box-shadow: inset 0 0 0 2px rgba(255, 251, 243, 0.14), 1px 2px 0 rgba(40, 30, 15, 0.25);
+}
+.office-person-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 19px;
+  color: var(--bg);
+  background: linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.5)), var(--tex-leather);
+  background-size: cover;
+}
+.office-person-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+.office-person-name {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.15;
+  color: #2b2620;
+}
+.office-person-bio {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  line-height: 1.25;
+  color: #6b5f4a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

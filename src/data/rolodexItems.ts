@@ -112,6 +112,13 @@ function officeItems(officeMembers: Member[]): OfficeRolodexItem[] {
 }
 
 export function rolodexItemsForCategory(key: CategoryKey): RolodexItem[] {
+  if (key === 'members') {
+    return members
+      .filter((member) => member.category === 'members' || member.category === 'offices')
+      .sort(compareDirectoryName)
+      .map(personItem)
+  }
+
   const categoryMembers = members
     .filter((member) => member.category === key)
     .sort(compareDirectoryName)
