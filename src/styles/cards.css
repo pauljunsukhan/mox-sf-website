@@ -25,12 +25,8 @@
   color: #2b2620 !important;
   border: 1px solid #3a2f22 !important;
   box-shadow:
-    inset 0 2px 0 rgba(255, 251, 243, 0.6),
-    inset 0 -4px 7px rgba(60, 45, 25, 0.2),
-    inset 2px 0 0 rgba(255, 251, 243, 0.22),
-    inset -2px 0 0 rgba(60, 45, 25, 0.14),
-    0 2px 0 rgba(58, 47, 34, 0.55),
-    0 18px 34px -14px rgba(40, 30, 15, 0.62) !important;
+    inset 0 1px 0 rgba(255, 251, 243, 0.5),
+    0 16px 32px -18px rgba(40, 30, 15, 0.55) !important;
 }
 
 /* 3) Balanced square photo, recessed into the cloth like a mounted plate. */
@@ -120,20 +116,21 @@
    paper desk -> leather tray -> book-cloth cards -> brass hardware.
    ============================================================ */
 
-/* No material backing — just a soft drop shadow under the card. */
+/* Make the backing invisible (kills the doubled lift) but KEEP it in layout —
+   it's the wheel hit-target (tray) the drum's scroll relies on. */
 .drum-shadow {
   background: none !important;
   background-image: none !important;
   border: none !important;
+  box-shadow: none !important;
   opacity: 1 !important;
-  box-shadow: 0 26px 48px -30px rgba(40, 28, 12, 0.45) !important;
 }
 
 /* (brass active tab removed — too much; using the default dark tab) */
 
-/* Shorter card — trims the empty book-cloth below the content. */
+/* One coherent card size for every width (no fighting Codex's base value). */
 .rolodex-machine {
-  --card-h: clamp(372px, 50vh, 432px) !important;
+  --card-h: clamp(344px, 47vh, 384px) !important;
 }
 
 /* iPhone: drop the decorative menu items, fit the tabs, tighten the bar. */
@@ -235,6 +232,9 @@
   /* pin to the right, clear of the centered card (don't rely on --card-w) */
   left: auto !important;
   right: max(8px, calc(50% - 220px)) !important;
+  /* center on the CARD (which sits at --axis-y), not the machine's 50% */
+  top: calc(var(--axis-y) - var(--card-pivot-y) + var(--card-h) / 2) !important;
+  transform: translateY(-50%) !important;
   flex-flow: column wrap !important;
   max-height: calc(100vh - 120px) !important;
   gap: 3px 6px !important;

@@ -105,9 +105,9 @@ export function Rolodex({
 
   useEffect(() => {
     const onWheel = (event: WheelEvent) => {
-      if (!isArmedRef.current || count <= 1) return
+      if (count <= 1) return
       if (!pointIsInside(trayRef.current, event.clientX, event.clientY)) {
-        releaseRolodex()
+        if (isArmedRef.current) releaseRolodex()
         return
       }
 
@@ -123,10 +123,12 @@ export function Rolodex({
       const atStart = posRef.current <= 0.01 && delta < 0
       const atEnd = posRef.current >= count - 1 - 0.01 && delta > 0
       if (atStart || atEnd) {
-        releaseRolodex()
+        if (isArmedRef.current) releaseRolodex()
         return
       }
 
+      // Auto-arm: wheeling over the drum drives it without needing a prior click.
+      if (!isArmedRef.current) armRolodex()
       event.preventDefault()
       setVirtualPos(posRef.current + delta)
     }
