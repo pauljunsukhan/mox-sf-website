@@ -294,8 +294,9 @@ body::after {
   border: 0;
   border-radius: 14px;
   color: #2b2b2b;
-  background-image: linear-gradient(rgba(238, 236, 232, 0.72), rgba(218, 214, 204, 0.86)), var(--tex-book-cloth);
-  background-size: cover;
+  background-image: linear-gradient(rgba(238, 236, 232, 0.3), rgba(218, 214, 204, 0.44)), var(--tex-book-cloth);
+  background-size: cover, 280px;
+  background-repeat: no-repeat, repeat;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 12px 22px -14px rgba(46, 35, 20, 0.82),
     0 1px 3px rgba(46, 35, 20, 0.28);
   font: inherit;
@@ -426,8 +427,9 @@ body::after {
   padding: 36px 24px 18px;
   display: flex;
   flex-direction: column;
-  background-image: linear-gradient(rgba(238, 236, 232, 0.55), rgba(238, 236, 232, 0.66)), var(--tex-book-cloth);
-  background-size: cover;
+  background-image: linear-gradient(rgba(250, 247, 240, 0.08), rgba(236, 226, 211, 0.18)), var(--tex-book-cloth);
+  background-size: cover, 300px;
+  background-repeat: no-repeat, repeat;
   background-position: center;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.55) inset, 0 22px 40px -18px rgba(60, 48, 30, 0.62),
     0 2px 6px rgba(60, 48, 30, 0.22);

@@ -17,9 +17,9 @@
 .card-face {
   padding: 20px !important;
   background-image:
-    linear-gradient(rgba(238, 236, 230, 0.28), rgba(228, 224, 216, 0.4)),
+    linear-gradient(rgba(250, 247, 240, 0.06), rgba(236, 226, 211, 0.14)),
     var(--tex-book-cloth) !important;
-  background-size: cover, 360px !important;
+  background-size: cover, 300px !important;
   background-repeat: no-repeat, repeat !important;
   background-position: center !important;
   color: #2b2620 !important;
@@ -226,18 +226,19 @@
   display: none !important;
 }
 
-/* Alphabet rail: wrap into a second column when it's too tall for the screen
-   (replaces scrolling). One column when it fits, two when it doesn't. */
+/* Alphabet rail: one clean vertical column beside the rolodex. */
 .alpha-index {
   /* pin to the right, clear of the centered card (don't rely on --card-w) */
   left: auto !important;
   right: max(8px, calc(50% - 220px)) !important;
+  bottom: auto !important;
   /* center on the CARD (which sits at --axis-y), not the machine's 50% */
   top: calc(var(--axis-y) - var(--card-pivot-y) + var(--card-h) / 2) !important;
   transform: translateY(-50%) !important;
-  flex-flow: column wrap !important;
-  max-height: calc(100vh - 120px) !important;
-  gap: 3px 6px !important;
+  flex-flow: column nowrap !important;
+  height: auto !important;
+  max-height: none !important;
+  gap: 3px !important;
   overflow: visible !important;
 }
 
