@@ -140,7 +140,9 @@ export function Rolodex({
   useEffect(() => {
     const onWheel = (event: WheelEvent) => {
       if (count <= 1) return
-      if (!pointIsInside(trayRef.current, event.clientX, event.clientY)) {
+      // capture across the WHOLE stage — wheeling anywhere on the rolodex
+      // (far preview strips included) spins the deck, never the page
+      if (!pointIsInside(stageRef.current, event.clientX, event.clientY)) {
         if (isArmedRef.current) releaseRolodex()
         return
       }
@@ -154,9 +156,11 @@ export function Rolodex({
       const delta = (event.deltaY * unit) / WHEEL_PX_PER_CARD
       if (Math.abs(delta) < 0.01) return
 
+      // The one hand-back to the page: deck start + scrolling up = the exit
+      // toward the banner/portrait train. Everything else is absorbed, so the
+      // page never jiggles while you ride the deck (including past the end).
       const atStart = posRef.current <= 0.01 && delta < 0
-      const atEnd = posRef.current >= count - 1 - 0.01 && delta > 0
-      if (atStart || atEnd) {
+      if (atStart) {
         if (isArmedRef.current) releaseRolodex()
         return
       }
