@@ -52,11 +52,14 @@ export function Rolodex({
   items,
   activeIndex = 0,
   onActiveIndexChange,
+  introSpin = false,
 }: {
   category: string
   items: RolodexItem[]
   activeIndex?: number
   onActiveIndexChange?: (category: string, index: number) => void
+  /** riffle the deck once on mount (People-page entrance) */
+  introSpin?: boolean
 }) {
   const count = items.length
   const sectionRef = useRef<HTMLElement>(null)
@@ -72,8 +75,30 @@ export function Rolodex({
   const dragRef = useRef<DragState | null>(null)
   const suppressClickRef = useRef(false)
   const suppressControlClickRef = useRef(false)
+  const alphaScrubPointerRef = useRef<number | null>(null)
+
+  // ---- Entrance riffle: one state machine, one exit. ----
+  // pending: photos preloading, deck shows the start card, nothing moves yet
+  // running: rAF rolls pos start -> target; slots track exactly (no easing),
+  //          preview strips stay unmounted, parent is NOT notified per frame
+  // done:    normal rolodex; strips mount; parent notified once with target
+  const [intro, setIntro] = useState<'pending' | 'running' | 'done'>(() =>
+    introSpin ? 'pending' : 'done',
+  )
+  const introRef = useRef(intro)
+  const introRafRef = useRef(0)
+  const endIntro = () => {
+    cancelAnimationFrame(introRafRef.current)
+    if (introRef.current !== 'done') {
+      introRef.current = 'done'
+      setIntro('done')
+    }
+  }
 
   const armRolodex = () => {
+    // every user-input path (drag, wheel, alpha jump, stepper) arms first —
+    // so the riffle never fights live input
+    endIntro()
     isArmedRef.current = true
     setIsArmed(true)
   }
@@ -90,7 +115,9 @@ export function Rolodex({
   const commitPos = (nextPos: number) => {
     posRef.current = nextPos
     setPos(nextPos)
-    const rounded = clamp(Math.round(nextPos), 0, count - 1)
+    if (count === 0) return // an empty deck never reports an index
+    if (introRef.current === 'running') return // riffle notifies once, on settle
+    const rounded = clamp(Math.round(nextPos), 0, Math.max(0, count - 1))
     if (rounded !== lastNotifiedRef.current) {
       lastNotifiedRef.current = rounded
       onActiveIndexChange?.(category, rounded)
@@ -98,7 +125,7 @@ export function Rolodex({
   }
 
   const setVirtualPos = (nextPos: number) => {
-    const clamped = clamp(nextPos, 0, count - 1)
+    const clamped = clamp(nextPos, 0, Math.max(0, count - 1))
     commitPos(clamped)
   }
 
@@ -118,7 +145,101 @@ export function Rolodex({
     return () => query.removeEventListener('change', update)
   }, [])
 
+  // External jump (e.g. portrait-train click): follow activeIndex prop changes.
+  // The riffle never notifies per frame, so there are no echoes to filter; we
+  // simply don't fight the riffle while it owns the deck.
   useEffect(() => {
+    if (introRef.current !== 'done') return
+    const next = clamp(activeIndex, 0, Math.max(0, count - 1))
+    if (Math.round(posRef.current) !== next) {
+      lastNotifiedRef.current = next
+      commitPos(next)
+    }
+  }, [activeIndex])
+
+  // Entrance riffle driver. Photos for every card the riffle will show are
+  // decoded FIRST (bounded by a timeout), so the roll flashes real pictures
+  // with zero mid-flight network pops. StrictMode-safe: state survives the
+  // dev double-mount and the effect simply starts over from 'pending'.
+  useEffect(() => {
+    if (introRef.current === 'done') return
+    if (
+      count <= 1 ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+      document.body.classList.contains('no-motion')
+    ) {
+      endIntro()
+      return
+    }
+    const target = clamp(activeIndex, 0, count - 1)
+    const start = Math.min(count - 1, target + Math.min(16, count - 1))
+    if (start === target) {
+      endIntro()
+      return
+    }
+
+    let alive = true
+    const base = import.meta.env.BASE_URL
+    const srcs: string[] = []
+    for (let i = target; i <= start; i++) {
+      const item = items[i]
+      if (item?.kind === 'person') {
+        const p = item.member.localImage || item.member.image
+        if (p) srcs.push(/^https?:\/\//.test(p) ? p : `${base}${p.replace(/^\/+/, '')}`)
+      }
+    }
+    // park the deck on the start card while photos decode
+    commitPos(start)
+
+    const preload = Promise.all(
+      srcs.map(
+        (src) =>
+          new Promise<void>((resolve) => {
+            const img = new Image()
+            img.onload = () => resolve()
+            img.onerror = () => resolve()
+            img.src = src
+          }),
+      ),
+    )
+    const deadline = new Promise<void>((resolve) => setTimeout(resolve, 650))
+
+    Promise.race([preload, deadline]).then(() => {
+      if (!alive || introRef.current === 'done') return
+      introRef.current = 'running'
+      setIntro('running')
+      const t0 = performance.now()
+      const dur = 1500
+      const tick = (now: number) => {
+        if (!alive || introRef.current !== 'running') return
+        const p = Math.min(1, (now - t0) / dur)
+        const eased = 1 - Math.pow(1 - p, 3)
+        commitPos(start + (target - start) * eased)
+        if (p < 1) {
+          introRafRef.current = requestAnimationFrame(tick)
+        } else {
+          endIntro()
+          // settle: one clean notification with the final card
+          lastNotifiedRef.current = target
+          onActiveIndexChange?.(category, target)
+        }
+      }
+      introRafRef.current = requestAnimationFrame(tick)
+    })
+
+    return () => {
+      alive = false
+      cancelAnimationFrame(introRafRef.current)
+    }
+  }, [])
+
+  // Deck reset on tab change (skip the mount run — the riffle owns it).
+  const deckRef = useRef<{ category: string; count: number } | null>(null)
+  useEffect(() => {
+    const prevDeck = deckRef.current
+    deckRef.current = { category, count }
+    if (!prevDeck) return
+    if (prevDeck.category !== category || prevDeck.count !== count) endIntro()
     const next = clamp(activeIndex, 0, Math.max(0, count - 1))
     lastNotifiedRef.current = Math.round(next)
     releaseRolodex()
@@ -166,11 +287,25 @@ export function Rolodex({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') releaseRolodex()
     }
+    // If a control press never produces its paired click (drag off a letter or
+    // stepper and release elsewhere, or a cancelled gesture), the suppression
+    // flag would swallow the next keyboard/AT click — clear it just after any
+    // pointer sequence ends. A legit click still wins: it dispatches before
+    // the 0ms timer fires.
+    const onPointerEnd = () => {
+      window.setTimeout(() => {
+        suppressControlClickRef.current = false
+      }, 0)
+    }
 
     document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('pointerup', onPointerEnd)
+    document.addEventListener('pointercancel', onPointerEnd)
     window.addEventListener('keydown', onKeyDown)
     return () => {
       document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('pointerup', onPointerEnd)
+      document.removeEventListener('pointercancel', onPointerEnd)
       window.removeEventListener('keydown', onKeyDown)
     }
   }, [])
@@ -206,16 +341,56 @@ export function Rolodex({
     return true
   }
 
-  const handleJumpPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, index: number) => {
-    event.preventDefault()
+  // Alphabet rail: press jumps to the letter, then dragging scrubs through the
+  // letters (iOS-contacts style — pointer capture + elementFromPoint, since
+  // capture retargets events to the nav). The per-button onClick remains the
+  // keyboard/AT path.
+  const handleAlphaPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+    // never let the stage adopt this pointer — the rail overlaps the tray rect
     event.stopPropagation()
+    const letterButton =
+      event.target instanceof Element
+        ? event.target.closest<HTMLElement>('[data-rolodex-index]')
+        : null
+    if (!letterButton) return
+    const index = Number(letterButton.dataset.rolodexIndex)
+    if (!Number.isInteger(index)) return
+    event.preventDefault()
     suppressControlClickRef.current = true
+    alphaScrubPointerRef.current = event.pointerId
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      /* Pointer capture is a progressive enhancement here. */
+    }
     goTo(index)
   }
 
-  const handleStepPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, direction: number) => {
+  const handleAlphaPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
+    if (alphaScrubPointerRef.current !== event.pointerId) return
     event.preventDefault()
+    const hit = document.elementFromPoint(event.clientX, event.clientY)
+    const letterButton = hit?.closest<HTMLElement>('.alpha-index [data-rolodex-index]')
+    if (!letterButton) return
+    const index = Number(letterButton.dataset.rolodexIndex)
+    if (Number.isInteger(index) && index !== Math.round(posRef.current)) goTo(index)
+  }
+
+  const endAlphaScrub = (event: ReactPointerEvent<HTMLElement>) => {
+    if (alphaScrubPointerRef.current !== event.pointerId) return
+    alphaScrubPointerRef.current = null
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    } catch {
+      /* Ignore browsers that already released capture. */
+    }
+  }
+
+  const handleStepPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, direction: number) => {
     event.stopPropagation()
+    // touch: defer to onClick so a page-scroll swipe starting here can't step
+    if (event.pointerType === 'touch') return
+    event.preventDefault()
     suppressControlClickRef.current = true
     stepBy(direction)
   }
@@ -225,7 +400,13 @@ export function Rolodex({
 
     armRolodex()
     const tapIndex = previewIndexFromTarget(event.target)
-    const canDragFromPoint = pointIsInside(trayRef.current, event.clientX, event.clientY) || tapIndex !== undefined
+    // touch: only the cards themselves (already touch-action: none) start a
+    // drag — the tray margins stay free for natural page scrolling, so a
+    // vertical swipe there can't both pan the page and jolt the drum
+    const canDragFromPoint =
+      event.pointerType === 'touch'
+        ? eventTargetHitsSelector(event.target, '.slot, .preview-card')
+        : pointIsInside(trayRef.current, event.clientX, event.clientY) || tapIndex !== undefined
     if (count <= 1 || !canDragFromPoint) return
 
     dragRef.current = {
@@ -238,12 +419,9 @@ export function Rolodex({
       velocity: 0,
       didDrag: false,
     }
-
-    try {
-      event.currentTarget.setPointerCapture(event.pointerId)
-    } catch {
-      /* Pointer capture is a progressive enhancement here. */
-    }
+    // No pointer capture yet: capturing on pointerdown would retarget the
+    // paired click to the stage, killing links inside the active card (e.g.
+    // the staff mailto). Capture starts once a real drag begins (see move).
   }
 
   const handleStagePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -251,9 +429,15 @@ export function Rolodex({
     if (!drag || drag.pointerId !== event.pointerId) return
 
     const deltaY = event.clientY - drag.startY
-    if (!drag.didDrag && Math.abs(deltaY) < 5) return
-
-    drag.didDrag = true
+    if (!drag.didDrag) {
+      if (Math.abs(deltaY) < 5) return
+      drag.didDrag = true
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId)
+      } catch {
+        /* Pointer capture is a progressive enhancement here. */
+      }
+    }
     event.preventDefault()
 
     const nextPos = drag.startPos - deltaY / TOUCH_PX_PER_CARD
@@ -299,6 +483,21 @@ export function Rolodex({
     setVirtualPos(Math.round(posRef.current + momentum))
   }
 
+  // pointercancel = the browser claimed the gesture (page scroll). Settle on
+  // the nearest card without flick momentum so the drum doesn't jump.
+  const cancelPointerDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+
+    dragRef.current = null
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    } catch {
+      /* Ignore browsers that already released capture. */
+    }
+    setVirtualPos(Math.round(posRef.current))
+  }
+
   const tailLimit = isCompact ? 9 : TAIL_LIMIT
   const tailFadeStart = isCompact ? 5 : TAIL_FADE_START
   const tailStep = isCompact ? 16 : 23
@@ -310,17 +509,13 @@ export function Rolodex({
       aria-label="Mox members rolodex"
     >
       <div
-        className="rolodex-stage"
+        className={`rolodex-stage${intro !== 'done' ? ' is-riffling' : ''}`}
         ref={stageRef}
         onPointerDown={handleStagePointerDown}
         onPointerMove={handleStagePointerMove}
         onPointerUp={finishPointerDrag}
-        onPointerCancel={finishPointerDrag}
+        onPointerCancel={cancelPointerDrag}
       >
-        <div className="rolodex-pathbar" aria-hidden="true">
-          Macintosh HD ▸ Mox ▸ Members.rolodex
-        </div>
-
         <div className="rolodex-machine">
           <div className="drum-shadow" ref={trayRef} aria-hidden="true" />
 
@@ -332,6 +527,9 @@ export function Rolodex({
               const isWaitingBehind = offset > 0
               const depth = Math.abs(offset)
               if (!isActive && depth > tailLimit) return null
+              // riffle = cards only: the preview tabs mount once we settle,
+              // so the entrance never pays for strips re-rendering each frame
+              if (intro !== 'done' && !isActive) return null
 
               const tailDepth = Math.max(0, depth - 1)
               const topY = `calc(-${30 + tailDepth * tailStep}px)`
@@ -371,6 +569,9 @@ export function Rolodex({
                       type="button"
                       className="preview-card"
                       data-rolodex-index={i}
+                      // mirror the pointerEvents gate: near-invisible deep-tail
+                      // cards leave the tab order too
+                      tabIndex={tailFade > 0.32 ? 0 : -1}
                       onClick={(event) => {
                         if (consumeSuppressedClick()) {
                           event.preventDefault()
@@ -396,6 +597,10 @@ export function Rolodex({
             <nav
               className={`alpha-index${letters.length > 12 ? ' is-long' : ''}`}
               aria-label="Rolodex alphabetical index"
+              onPointerDown={handleAlphaPointerDown}
+              onPointerMove={handleAlphaPointerMove}
+              onPointerUp={endAlphaScrub}
+              onPointerCancel={endAlphaScrub}
             >
               {letters.map(({ letter, index }) => (
                 <button
@@ -404,7 +609,6 @@ export function Rolodex({
                   data-rolodex-index={index}
                   className={letter === activeAlpha ? 'is-current' : ''}
                   aria-current={letter === activeAlpha ? 'true' : undefined}
-                  onPointerDown={(event) => handleJumpPointerDown(event, index)}
                   onClick={(event) => {
                     if (consumeSuppressedClick()) {
                       event.preventDefault()

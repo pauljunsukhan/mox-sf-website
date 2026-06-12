@@ -11,18 +11,20 @@ export function CategoryTabs({
   onSelect: (i: number) => void
 }) {
   const selectFromPointer = (event: ReactPointerEvent<HTMLButtonElement>, index: number) => {
+    // touch: defer to onClick — a vertical page-scroll swipe that begins on a
+    // tab must not switch categories (the browser won't fire click after a pan)
+    if (event.pointerType === 'touch') return
     event.preventDefault()
     event.stopPropagation()
     onSelect(index)
   }
 
   return (
-    <div className="cat-tabs" role="tablist" aria-label="Member categories">
+    <div className="cat-tabs" role="group" aria-label="Member categories">
       {CATEGORIES.map((c, i) => (
         <button
           key={c.key}
-          role="tab"
-          aria-selected={i === active}
+          aria-pressed={i === active}
           className={`cat-tab${i === active ? ' is-active' : ''}`}
           onPointerDown={(event) => selectFromPointer(event, i)}
           onClick={() => onSelect(i)}

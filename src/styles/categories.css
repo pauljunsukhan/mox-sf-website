@@ -62,15 +62,6 @@
   font-size: 14px;
   opacity: 0.8;
 }
-.cat-blurb {
-  pointer-events: auto;
-  margin: 0;
-  font-family: var(--font-body);
-  font-style: italic;
-  font-size: 13px;
-  color: var(--text);
-  opacity: 0.72;
-}
 
 @media (max-width: 560px) {
   .rolodex-controls-pin {

@@ -89,27 +89,6 @@
   color: #8a7a5c !important;
   text-shadow: 0 1px 0 rgba(255, 251, 243, 0.5) !important;
 }
-/* redundant with the interest chips below — hide to keep the card balanced */
-.card-desc {
-  display: none !important;
-}
-/* keep interest chips to ~2 rows so tall cards don't clip */
-.card-tags {
-  flex-shrink: 0 !important; /* never let the chip row get crushed to 0 */
-  max-height: 54px !important;
-  overflow: hidden !important;
-}
-/* hide empty interest chips (members with blank interest entries) */
-.card-tags li:empty {
-  display: none !important;
-}
-
-/* Offices: larger profile pics in the office-group card. */
-.office-avatars img,
-.office-avatars span {
-  width: 92px !important;
-  height: 92px !important;
-}
 
 /* ============================================================
    "Make it beautiful" pass — lean into the Haptica materials:
@@ -128,34 +107,47 @@
 
 /* (brass active tab removed — too much; using the default dark tab) */
 
-/* One coherent card size for every width (no fighting Codex's base value). */
+/* One coherent card size for every width (no fighting Codex's base value) —
+   but never taller than the stage: bound by viewport height so the card
+   bottom (specs, email) stays reachable on landscape phones / short windows. */
 .rolodex-machine {
-  --card-h: clamp(344px, 47vh, 384px) !important;
+  --card-h: min(clamp(344px, 47vh, 384px), calc(100svh - 230px)) !important;
 }
 
-/* iPhone: drop the decorative menu items, fit the tabs, tighten the bar. */
+/* iPhone: fit the tabs, tighten the bar. */
 @media (max-width: 640px) {
-  .menu-bar .mi {
-    display: flex !important;
-    padding: 0 7px !important;
-  }
-  .menu-bar .mi:nth-of-type(n + 3),
-  .menu-bar .clock {
-    display: none !important;
-  }
   .menu-bar {
     width: 100% !important;
-    overflow: hidden !important;
     padding: 0 8px !important;
   }
-  .brand-logo {
-    margin-right: 8px !important;
-    flex: 0 0 auto !important;
+  .banner-brand {
+    /* align the logo flush with the 8px bar padding (desktop pulls it -12px) */
+    margin-left: -8px !important;
   }
-  .menu-bar .toggle {
-    margin-left: auto !important;
-    margin-right: 0 !important;
-    flex: 0 0 auto !important;
+  .banner-nav {
+    margin-left: 2px !important;
+    gap: 0 !important;
+  }
+  .banner-link {
+    font-size: 12px !important;
+    padding: 0 6px !important;
+    letter-spacing: 0.04em !important;
+  }
+  /* banner-scoped: the hero wordmark keeps its own clamp() sizes */
+  .banner-brand .mox-logo .mox-script {
+    font-size: 25px !important;
+  }
+  .banner-brand .mox-logo .mox-pixel {
+    font-size: 11.5px !important;
+  }
+  /* dock the motion switch into the 48px bar: a full-height target that no
+     longer floats over scrolling content under the sticky banner */
+  .motion-tab {
+    position: static !important;
+    align-self: stretch !important;
+    border: 0 !important;
+    border-left: 1px solid var(--window-border) !important;
+    padding: 0 10px !important;
   }
   .cat-bar {
     padding: 10px 8px !important;
@@ -194,21 +186,18 @@
   .card-title {
     font-size: 20px !important;
   }
-  .card-tags {
-    max-height: 44px !important;
-  }
-  .office-avatars img,
-  .office-avatars span {
-    width: 58px !important;
-    height: 58px !important;
-  }
 }
-.card-tags li {
-  border: 1px solid #3a2f22 !important;
-  background: rgba(255, 251, 243, 0.2) !important;
-  color: #2b2620 !important;
-  box-shadow: inset 0 1px 0 rgba(255, 251, 243, 0.45), 0 1px 0 rgba(58, 47, 34, 0.3) !important;
-  text-shadow: 0 1px 0 rgba(255, 251, 243, 0.4) !important;
+/* very narrow phones: squeeze the bar so LOGIN + the motion switch fit */
+@media (max-width: 360px) {
+  .banner-link {
+    padding: 0 4px !important;
+  }
+  .banner-nav {
+    margin-left: 0 !important;
+  }
+  .motion-tab {
+    padding: 0 6px !important;
+  }
 }
 .card-specs {
   border-top: 1px solid rgba(58, 47, 34, 0.45) !important;
@@ -228,18 +217,24 @@
 
 /* Alphabet rail: one clean vertical column beside the rolodex. */
 .alpha-index {
-  /* pin to the right, clear of the centered card (don't rely on --card-w) */
+  /* pin to the right with an exact 8px clearance off the card edge:
+     38px = rail outer width (30px) + 8px gap */
   left: auto !important;
-  right: max(8px, calc(50% - 220px)) !important;
+  right: max(8px, calc(50% - var(--card-w) / 2 - 38px)) !important;
   bottom: auto !important;
   /* Keep the rail in the free band below the sticky tabs. */
   top: max(176px, calc(var(--axis-y) - var(--card-pivot-y) + 16px)) !important;
   transform: none !important;
   flex-flow: column nowrap !important;
   height: auto !important;
-  max-height: none !important;
+  /* short windows: cap to the stage (176px top + 12px bottom inset) and let
+     the rail scroll instead of clipping the last letters out of reach */
+  max-height: calc(100svh - var(--banner-h) - 188px) !important;
   gap: 3px !important;
-  overflow: visible !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  /* the rail owns its touch gestures (press + scrub), never page scroll */
+  touch-action: none !important;
   scrollbar-width: none !important;
 }
 .alpha-index::-webkit-scrollbar {
@@ -347,13 +342,32 @@
   color: var(--copper) !important;
   text-decoration: none;
 }
-.card-email:hover {
+@media (hover: hover) {
+  .card-email:hover {
+    text-decoration: underline;
+  }
+}
+.card-email:active {
   text-decoration: underline;
+}
+.card-email:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ============================================================
    Office cards — one clean people list (avatar + name + bio).
    ============================================================ */
+/* OfficeCard renders the stamp directly on .card-face (no .card-top), so its
+   absolute anchor is the face itself — inset it to match the member cards'
+   20px face padding, and keep long office names clear of it. */
+.office-card .card-stamp {
+  top: 20px !important;
+  right: 20px !important;
+}
+.office-card .card-title {
+  padding-right: 96px !important;
+}
 .office-meta {
   display: flex;
   flex-wrap: wrap;
@@ -419,4 +433,246 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ============================================================
+   Banner — drop the literal-Mac chrome (fake menus + filesystem
+   pathbar); keep the wordmark, add the brand pixel-sparkle.
+   ============================================================ */
+.banner {
+  gap: 0 !important;
+}
+.banner-brand {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  flex: 0 0 auto;
+  padding: 0 12px;
+  margin-left: -12px;
+  text-decoration: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+/* at home, the logo carries the gold "you are here" */
+.banner-brand.is-here {
+  background: var(--accent);
+}
+/* hover/focus affordance for the wordmark link (a soft ink wash — a full
+   invert would fight the multicolor wordmark) */
+/* hover only where hover exists — iOS sticks :hover after a tap. Press
+   feedback comes from the optimistic .is-here (MenuBar moves it on
+   pointerdown), so there is exactly ONE gold highlight, never a flash. */
+@media (hover: hover) {
+  .banner-brand:not(.is-here):hover {
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
+  }
+}
+.banner-brand:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.banner-brand.is-here .mox-pixel,
+.banner-brand.is-here .mox-script {
+  color: #2b2208;
+}
+.banner-brand.is-here .spark rect {
+  fill: #2b2208;
+}
+.banner-brand.is-here .spark .spark-dim {
+  fill: #4a3a10;
+}
+/* the 8-bit sparkle (reused: logo, active card) */
+.spark rect {
+  fill: var(--accent);
+}
+.spark .spark-dim {
+  fill: #e8c14a;
+}
+
+/* the moxsf wordmark — pixel "mox" × gold sparkle × script "sf" (Page-2 palette) */
+/* the moxsf lockup is ONE tight unit — equal small gaps either side of the
+   spark; the same piece renders in the banner and (scaled) in the hero title */
+.mox-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.mox-pixel {
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  color: #33261a;
+}
+.mox-logo .spark {
+  flex: 0 0 auto;
+  width: 11px;
+  height: 11px;
+  margin: 0;
+}
+.mox-script {
+  font-family: 'Pinyon Script', cursive;
+  font-size: 36px;
+  color: #8a6232;
+  margin: -4px 0 0;
+}
+/* tighter lockup: mox · spark · sf read as one mark — banner only, so the
+   hero wordmark keeps its own .vibe-logo spark spacing */
+/* Taller banner = easier to press; keep the rolodex sticky offsets in sync. */
+:root {
+  --banner-h: 48px;
+}
+.menu-bar {
+  height: var(--banner-h) !important;
+}
+.rolodex-stage {
+  top: var(--banner-h) !important;
+  height: calc(100dvh - var(--banner-h)) !important;
+}
+.rolodex-scroll {
+  min-height: calc(100dvh - var(--banner-h)) !important;
+  height: calc(100dvh - var(--banner-h)) !important;
+}
+@supports (height: 100svh) {
+  .rolodex-stage {
+    height: calc(100svh - var(--banner-h)) !important;
+  }
+  .rolodex-scroll {
+    min-height: calc(100svh - var(--banner-h)) !important;
+    height: calc(100svh - var(--banner-h)) !important;
+  }
+}
+
+.banner-nav {
+  display: flex;
+  align-items: stretch;
+  align-self: stretch;
+  gap: 2px;
+  margin-left: 44px;
+}
+.banner-link {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-primary);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+  text-decoration: none;
+  padding: 0 16px;
+  /* instant taps, no iOS gray flash — the gold .is-here is the feedback */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) {
+  .banner-link:hover {
+    background: var(--primary);
+    color: var(--menu-bg);
+  }
+}
+.banner-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.banner-link.is-here {
+  background: var(--accent);
+  color: #2b2208;
+}
+.members-portal {
+  align-self: stretch;
+  white-space: nowrap;
+}
+
+/* Motion switch — a little tab hanging under the banner's right edge.
+   No words: just the ff icon + radio dot (gold = on). */
+.motion-tab {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  position: absolute;
+  top: 100%;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px;
+  background: var(--menu-bg);
+  border: 1px solid var(--window-border);
+  border-top: 0;
+  cursor: pointer;
+  font: inherit;
+}
+@media (hover: hover) {
+  .motion-tab:hover {
+    background: var(--accent);
+  }
+}
+/* touch: gold press while the finger is down; releases clean */
+.motion-tab:active {
+  background: var(--accent);
+}
+.motion-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.motion-ff path {
+  fill: var(--primary);
+}
+.motion-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-left: 6px;
+  border: 1px solid var(--primary);
+  border-radius: 50%;
+  background: transparent;
+  vertical-align: -1px;
+}
+.motion-dot.is-on {
+  background: var(--accent);
+  border-color: #3a2f22;
+}
+
+/* Entrance riffle: slots track pos exactly — the 0.28s easing would lag at
+   riffle speed and pile cards over the active one (z updates instantly,
+   transforms don't). With it off, the riffle is literally fast scrolling. */
+.rolodex-stage.is-riffling .slot {
+  transition: none !important;
+}
+
+/* Motion off: stop every ambient animation; trains become hand-scrollable. */
+body.no-motion .train-track {
+  animation: none !important;
+}
+body.no-motion .train-row {
+  overflow-x: auto;
+}
+body.no-motion .flap-leaf {
+  animation-duration: 1ms !important;
+}
+body.no-motion .slot,
+body.no-motion .card-inner {
+  transition: none !important;
+}
+
+/* ============================================================
+   Sparkle accents — thread the brand ✦ through the live UI.
+   ============================================================ */
+/* the focused card gets the gold pixel-sparkle on its stamp */
+.slot.is-active .card-stamp::before {
+  content: '';
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 6px;
+  vertical-align: -1px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Crect x='6' y='1' width='2' height='12' fill='%23d4a017'/%3E%3Crect x='1' y='6' width='12' height='2' fill='%23d4a017'/%3E%3Crect x='3' y='3' width='2' height='2' fill='%23e8c14a'/%3E%3Crect x='9' y='3' width='2' height='2' fill='%23e8c14a'/%3E%3Crect x='3' y='9' width='2' height='2' fill='%23e8c14a'/%3E%3Crect x='9' y='9' width='2' height='2' fill='%23e8c14a'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+/* the current alphabet letter -> brand gold (the sparkle color) */
+.alpha-index button.is-current,
+.alpha-index button[aria-current='true'] {
+  background: var(--accent) !important;
+  color: #2b2208 !important;
 }

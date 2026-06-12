@@ -12,6 +12,8 @@ dist-ssr
 reference/
 
 # Local design/test captures.
+/*.png
+/*.zip
 /card-*.png
 /consolidated-*.png
 /mobile-*.png

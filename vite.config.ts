@@ -7,4 +7,8 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   base: process.env.VITE_BASE ?? '/mox-sf-website/',
   plugins: [react(), tailwindcss()],
+  server: {
+    host: true, // expose on LAN so phones on the same wifi can open it
+    allowedHosts: true, // dev-only: let tunnel hostnames (trycloudflare etc.) through
+  },
 })

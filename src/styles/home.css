@@ -1,0 +1,811 @@
+/* ============================================================
+   home.css — main page: vibe hero × split-flap event board,
+   calendar ledger, join cards. Leans on the Haptica material
+   pack: leather housing, brass plate, copper rules, book cloth.
+   ============================================================ */
+
+.home {
+  position: relative;
+  z-index: 1;
+}
+
+/* ------------------------------------------------------------
+   1) Vibe hero
+   ------------------------------------------------------------ */
+.vibe {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 56px 18px 64px;
+}
+/* hero-scale moxsf wordmark */
+.vibe-logo {
+  margin: 0 0 12px;
+  line-height: 1;
+}
+/* the same tight lockup as the banner, scaled — equal gaps either side */
+.vibe-logo .mox-logo {
+  gap: clamp(10px, 2vw, 18px);
+}
+.vibe-logo .mox-pixel {
+  font-size: clamp(34px, 6.4vw, 64px);
+  letter-spacing: 2px;
+}
+.vibe-logo .mox-script {
+  font-size: clamp(76px, 14vw, 148px);
+  margin: -8px 0 0;
+  padding-right: 0;
+}
+.vibe-logo .spark,
+.vibe-logo .mox-logo .spark {
+  width: clamp(22px, 4vw, 40px);
+  height: clamp(22px, 4vw, 40px);
+  margin: 0;
+}
+.vibe-sub {
+  margin: 0 0 40px;
+  max-width: 520px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text);
+  opacity: 0.75;
+}
+
+/* ------------------------------------------------------------
+   The split-flap board, mounted in a leather housing
+   ------------------------------------------------------------ */
+.board-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 100%;
+}
+.flapboard {
+  /* one tile width drives everything; gaps scale with it so the
+     letter-size : spacing ratio stays constant at every viewport.
+     20 cols + gaps ≈ 22.1 tile-units; paper cards, no housing. */
+  --flap-w: min(26px, calc((100vw - 48px) / 22.1));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--flap-w) * 0.34);
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  max-width: 100%;
+  overflow: visible;
+}
+.flap-line {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.flap-row {
+  display: flex;
+  gap: calc(var(--flap-w) * 0.11);
+  justify-content: center;
+}
+/* clickable event rows on the board */
+.flap-row-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.flap-row-btn:hover {
+  filter: brightness(1.12);
+}
+.flap-row-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+/* RSVP ↗ in the right gutter — costs no tile width. The anchor is a real hit
+   box (~44x40px even at phone tile sizes) that grows leftward/vertically while
+   the glyph stays pinned at the gutter position. Solid copper: passes AA at
+   every rendered size (opacity fades dropped it below 4.5:1). */
+.flap-link {
+  position: absolute;
+  right: calc(var(--flap-w) * -1.05);
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  align-items: center;
+  justify-items: end;
+  width: min(44px, calc(var(--flap-w) * 2.6));
+  height: max(40px, calc(var(--flap-w) * 2));
+  font-family: var(--font-primary);
+  font-size: max(13px, calc(var(--flap-w) * 0.8));
+  font-weight: 700;
+  line-height: 1;
+  color: var(--copper);
+  text-decoration: none;
+}
+.flap-link:hover {
+  /* keep copper (gold-as-text fails contrast on this paper); underline signals */
+  text-decoration: underline;
+}
+.flap-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* invisible placeholder that keeps all rows the same width */
+.flap-link.is-ghost {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* tiny ▶ in the board's top-right gutter — replays the clatter, just for fun */
+.flap-replay {
+  position: absolute;
+  /* honest 12px hit padding (no negative margins — they skew tap targeting) */
+  top: calc(var(--flap-w) * 0.45 - 12px);
+  right: calc(var(--flap-w) * -1.15 - 12px);
+  padding: 12px;
+  background: none;
+  border: 0;
+  line-height: 0;
+  cursor: pointer;
+}
+.flap-replay svg {
+  width: calc(var(--flap-w) * 0.55);
+  height: auto;
+}
+.flap-replay path {
+  fill: var(--primary);
+  opacity: 0.55;
+}
+@media (hover: hover) {
+  .flap-replay:hover path {
+    fill: var(--accent);
+    opacity: 1;
+  }
+}
+.flap-replay:active path {
+  fill: var(--accent);
+  opacity: 1;
+}
+.flap-replay:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* phones: the gutter sits off-screen at full-width boards — perch the ▶
+   just above the board's top-right corner instead */
+@media (max-width: 700px) {
+  .flap-replay {
+    top: calc(var(--flap-w) * -1.1 - 12px);
+    right: -12px;
+  }
+}
+
+/* one character cell — a little vellum card with an ink Courier glyph */
+.flap {
+  position: relative;
+  width: var(--flap-w);
+  height: calc(var(--flap-w) * 2);
+  flex: 0 0 auto;
+  border: 1px solid rgba(58, 47, 34, 0.55);
+  background: var(--window-bg);
+  box-shadow: 0 1px 0 rgba(255, 251, 243, 0.6) inset, 0 2px 3px rgba(43, 34, 22, 0.18);
+  transition: opacity 0.3s ease;
+}
+.flap.is-blank {
+  opacity: 0;
+}
+.flap-half,
+.leaf-face {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  overflow: hidden;
+  background: var(--window-bg);
+}
+.flap-half.anchor-top {
+  top: 0;
+}
+.flap-half.anchor-bottom {
+  bottom: 0;
+}
+/* the glyph spans the full cell; each half clips its own portion */
+.flap-ch {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: calc((var(--flap-w) * 2) - 2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-primary);
+  font-style: normal;
+  font-weight: 700;
+  font-size: calc(var(--flap-w) * 1.34);
+  line-height: 1;
+  color: #2b2620;
+}
+.anchor-top .flap-ch {
+  top: 0;
+}
+.anchor-bottom .flap-ch {
+  bottom: 0;
+}
+.flap-leaf {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+  animation: leaf-fold 125ms cubic-bezier(0.55, 0.08, 0.7, 0.2) forwards;
+  z-index: 2;
+}
+.leaf-face {
+  top: 0;
+  height: 100%;
+  backface-visibility: hidden;
+}
+.leaf-face.anchor-bottom {
+  transform: rotateX(180deg);
+}
+/* a touch of shade on the falling leaf sells the paper fold */
+.leaf-face.leaf-front::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(60, 45, 25, 0.12);
+}
+@keyframes leaf-fold {
+  from {
+    transform: rotateX(0deg);
+  }
+  to {
+    transform: rotateX(-180deg);
+  }
+}
+.flap-seam {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: rgba(58, 47, 34, 0.3);
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------
+   Trains — marquee rows of textured cards. Click to stop &
+   hand-scroll; click outside to resume.
+   ------------------------------------------------------------ */
+.words-train {
+  width: min(880px, 100%);
+  margin: 0 auto 14px;
+}
+.partner-train {
+  width: min(880px, 100%);
+  margin: 0 auto 44px;
+}
+.photos-train {
+  width: min(880px, 100%);
+  margin: 40px auto 0;
+}
+.life-train {
+  width: min(880px, 100%);
+  margin: 18px auto 0;
+}
+.people-train {
+  width: min(880px, 100%);
+  margin: 16px auto 4px;
+}
+.train-portrait {
+  width: 64px;
+  height: 64px;
+  padding: 4px;
+}
+.train-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 1px solid #241f18;
+  filter: saturate(0.97);
+}
+.train-row {
+  overflow: hidden;
+  width: 100%;
+  cursor: grab;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  scrollbar-width: none;
+}
+/* while the marquee runs, touches on it may only pan the page vertically;
+   paused and motion-off rows keep native horizontal touch scrolling */
+body:not(.no-motion) .train-row:not(.is-paused) {
+  touch-action: pan-y;
+}
+.train-row::-webkit-scrollbar {
+  display: none;
+}
+.train-row.is-paused {
+  overflow-x: auto;
+  cursor: ew-resize;
+}
+.train-track {
+  display: flex;
+  width: max-content;
+  padding: 6px 0 12px;
+  animation: train-move linear infinite;
+  will-change: transform;
+}
+.train-track.is-reverse {
+  animation-direction: reverse;
+}
+@keyframes train-move {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.train-set {
+  display: flex;
+  gap: 16px;
+  padding-right: 16px;
+  flex: 0 0 auto;
+}
+
+/* the cards — exactly the people-card language: book cloth, ink keyline,
+   one flat shadow. Nothing extra. */
+.train-card {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #3a2f22;
+  background-image: linear-gradient(rgba(250, 247, 240, 0.12), rgba(236, 226, 211, 0.2)), var(--tex-book-cloth);
+  background-size: cover, 300px;
+  background-repeat: no-repeat, repeat;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 251, 243, 0.5),
+    0 16px 32px -18px rgba(40, 30, 15, 0.55);
+}
+/* partner lockups: the org's native background color replaces the cloth;
+   3:1 aspect like the source, logo untouched */
+.train-logo {
+  width: auto;
+  min-width: 150px;
+  height: 58px;
+  padding: 9px 16px;
+  gap: 9px;
+  background-image: none;
+  overflow: hidden;
+}
+.train-logo img {
+  max-width: 130px;
+  max-height: 100%;
+  object-fit: contain;
+}
+.train-logo-name {
+  font-family: var(--font-primary);
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+/* ----- moving vs stopped: two clearly different modes -----
+   moving: the row is one big "stop" target (grab cursor, links inert)
+   stopped: cards become links — pointer cursor, gold ↗ badge, hover outline */
+.train-card {
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+}
+.train-open {
+  display: none;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 17px;
+  height: 17px;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-primary);
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--accent);
+  color: #2b2208;
+  border: 1px solid #3a2f22;
+  pointer-events: none;
+}
+.train-row:not(.is-paused) a.train-card {
+  pointer-events: auto;
+  cursor: grab;
+}
+.train-row.is-paused a.train-card {
+  cursor: pointer;
+}
+.train-row.is-paused a.train-card .train-open {
+  display: flex;
+}
+.train-row.is-paused a.train-card:hover {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* keyboard path: focusing a card pauses the train (Row handles that) and gets
+   the same gold affordance the paused-hover state shows */
+.train-row a.train-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.train-row a.train-card:focus-visible .train-open {
+  display: flex;
+}
+.train-word {
+  padding: 11px 18px;
+  font-family: var(--font-primary);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #2b2620;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(255, 251, 243, 0.5);
+}
+.train-photo {
+  width: 196px;
+  height: 124px;
+  padding: 6px;
+}
+.train-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 1px solid #241f18;
+  filter: saturate(0.97);
+}
+
+/* (no prefers-reduced-motion block here: body.no-motion — seeded from the OS
+   preference in App and toggleable in the banner — is the single motion gate,
+   handled in cards.css. A media-query freeze would lock the switch off.) */
+
+/* ------------------------------------------------------------
+   2) Calendar ledger
+   ------------------------------------------------------------ */
+.calendar {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 64px 20px 26px;
+  scroll-margin-top: calc(var(--banner-h, 30px) + 14px);
+}
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  justify-content: center;
+  margin: 0 0 30px;
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: clamp(15px, 2.4vw, 22px);
+  letter-spacing: 0.05em;
+  color: var(--primary);
+}
+.section-script {
+  font-family: 'Pinyon Script', cursive;
+  font-size: clamp(34px, 5vw, 48px);
+  font-weight: 400;
+  color: #8a6232;
+  line-height: 1;
+}
+
+.ledger {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ledger-item {
+  position: relative; /* anchors the absolute .ledger-link gutter icon */
+  border-bottom: 1px solid rgba(165, 91, 52, 0.32);
+}
+.ledger-item:first-child {
+  border-top: 1px solid rgba(165, 91, 52, 0.32);
+}
+.ledger-item.is-open {
+  background: rgba(212, 160, 23, 0.07);
+}
+.ledger-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  width: 100%;
+  /* fixed right gutter reserved for the ↗ link (mirrors .flap-link),
+     so chip/time align at the same x whether or not a row has a link */
+  padding: 13px 48px 13px 6px;
+  background: none;
+  border: 0;
+  margin: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ledger-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.ledger-date {
+  flex: 0 0 86px;
+  font-family: var(--font-primary);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: #6f6147; /* faded ledger ink, AA on vellum (the old tan was 4.16:1) */
+  white-space: nowrap;
+}
+.ledger-date b {
+  color: var(--primary);
+}
+.ledger-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ledger-title {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 15.5px;
+  color: var(--primary);
+}
+.ledger-blurb {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 12.5px;
+  color: var(--text);
+  opacity: 0.66;
+}
+/* chip + time form fixed-width right-flush columns: every row's access chip
+   and start time line up at the same x, titles wrap without pushing them */
+.ledger-meta {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+/* access chips: solid color blocks, words knocked out in vellum (negative) */
+.ledger-access {
+  flex: 0 0 68px;
+  width: 68px;
+  box-sizing: border-box;
+  text-align: center;
+  font-family: var(--font-primary);
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  padding: 3px 0;
+  border: 0;
+  color: var(--window-bg);
+}
+.ledger-access.is-public {
+  background: #007a7a; /* darkened vintage teal — 4.94:1 vs --window-bg (AA) */
+}
+.ledger-access.is-members {
+  background: var(--copper);
+}
+.ledger-access.is-private {
+  background: var(--primary); /* ink */
+}
+.ledger-time {
+  flex: 0 0 112px;
+  width: 112px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-primary);
+  font-size: 12px;
+  color: var(--primary);
+  white-space: nowrap;
+}
+/* RSVP ↗ in the row's right gutter — a sibling of the button, like the
+   board's .flap-link. Anchored top/right (not 50%): the li grows when
+   .ledger-detail opens and a centered icon would drift. The box is a real
+   44x44 tap target; the glyph stays 13px. Solid copper passes AA (the old
+   0.75 fade didn't). */
+.ledger-link {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  font-family: var(--font-primary);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--copper);
+  text-decoration: none;
+}
+.ledger-link:hover {
+  /* keep copper (gold-as-text fails contrast on this paper); underline signals */
+  text-decoration: underline;
+}
+.ledger-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* expanded event details */
+.ledger-detail {
+  padding: 2px 6px 16px;
+}
+.ledger-detail .ledger-blurb {
+  display: block;
+  margin: 0 0 10px;
+  max-width: 560px;
+  font-size: 13.5px;
+  opacity: 0.85;
+}
+.ledger-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0 0 12px;
+  font-family: var(--font-primary);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6f6147; /* AA-safe faded ink */
+}
+.ledger-rsvp {
+  display: inline-block;
+  font-family: var(--font-primary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 6px 14px;
+  background: var(--accent);
+  color: #2b2208;
+  border: 1px solid #3a2f22;
+}
+.ledger-rsvp:hover {
+  filter: brightness(1.06);
+}
+.ledger-rsvp:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (min-width: 701px) {
+  .ledger-detail {
+    padding-left: 108px; /* aligns under the title column */
+  }
+}
+.join-foot a {
+  color: var(--copper);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--copper);
+}
+
+/* ------------------------------------------------------------
+   3) Join
+   ------------------------------------------------------------ */
+.join {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 56px 20px 90px;
+  scroll-margin-top: calc(var(--banner-h, 30px) + 14px);
+}
+.join-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.join-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 20px 18px;
+  text-decoration: none;
+  color: #2b2620;
+  border: 1px solid #3a2f22;
+  background-image: linear-gradient(rgba(250, 247, 240, 0.12), rgba(236, 226, 211, 0.2)), var(--tex-book-cloth);
+  background-size: cover, 300px;
+  background-repeat: no-repeat, repeat;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 251, 243, 0.5),
+    5px 6px 0 rgba(43, 34, 22, 0.16),
+    0 16px 30px -18px rgba(40, 30, 15, 0.55);
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+.join-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 251, 243, 0.5),
+    7px 9px 0 rgba(43, 34, 22, 0.2),
+    0 24px 38px -18px rgba(40, 30, 15, 0.6);
+}
+.join-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.join-kicker {
+  font-family: var(--font-primary);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #6f6147; /* AA-safe on the book-cloth texture (old tan was ~4.1:1) */
+}
+.join-card h3 {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 1.1;
+}
+.join-card p {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.45;
+  opacity: 0.78;
+  flex: 1;
+}
+.join-cta {
+  font-family: var(--font-primary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--copper);
+}
+.join-foot {
+  margin: 26px 4px 0;
+  text-align: center;
+  font-family: var(--font-primary);
+  font-size: 11.5px;
+  color: var(--text);
+  opacity: 0.72;
+}
+
+/* ------------------------------------------------------------
+   Responsive
+   ------------------------------------------------------------ */
+@media (max-width: 700px) {
+  .vibe {
+    padding-top: 36px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .join-cards {
+    grid-template-columns: 1fr;
+  }
+  .ledger-row {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+  .ledger-date {
+    flex-basis: 100%;
+  }
+  .ledger-meta {
+    /* meta on its own line; the fixed-width chip/time columns keep the same
+       x positions on every row (chip flush left, time flush right) */
+    width: 100%;
+    justify-content: space-between;
+  }
+  /* wrapped row: the 44px icon box sits in the (still reserved) right gutter
+     beside the full-width date line, clear of the meta line below */
+}
+
+/* motion-off counterpart of the join-card hover lift (body.no-motion is the
+   single motion gate — see cards.css) */
+body.no-motion .join-card,
+body.no-motion .join-card:hover {
+  transition: none;
+  transform: none;
+}
