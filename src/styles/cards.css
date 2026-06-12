@@ -633,13 +633,6 @@
   border-color: #3a2f22;
 }
 
-/* Entrance riffle: slots track pos exactly — the 0.28s easing would lag at
-   riffle speed and pile cards over the active one (z updates instantly,
-   transforms don't). With it off, the riffle is literally fast scrolling. */
-.rolodex-stage.is-riffling .slot {
-  transition: none !important;
-}
-
 /* Motion off: stop every ambient animation; trains become hand-scrollable. */
 body.no-motion .train-track {
   animation: none !important;

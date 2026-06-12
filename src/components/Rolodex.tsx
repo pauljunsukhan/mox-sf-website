@@ -52,14 +52,11 @@ export function Rolodex({
   items,
   activeIndex = 0,
   onActiveIndexChange,
-  introSpin = false,
 }: {
   category: string
   items: RolodexItem[]
   activeIndex?: number
   onActiveIndexChange?: (category: string, index: number) => void
-  /** riffle the deck once on mount (People-page entrance) */
-  introSpin?: boolean
 }) {
   const count = items.length
   const sectionRef = useRef<HTMLElement>(null)
@@ -77,28 +74,7 @@ export function Rolodex({
   const suppressControlClickRef = useRef(false)
   const alphaScrubPointerRef = useRef<number | null>(null)
 
-  // ---- Entrance riffle: one state machine, one exit. ----
-  // pending: photos preloading, deck shows the start card, nothing moves yet
-  // running: rAF rolls pos start -> target; slots track exactly (no easing),
-  //          preview strips stay unmounted, parent is NOT notified per frame
-  // done:    normal rolodex; strips mount; parent notified once with target
-  const [intro, setIntro] = useState<'pending' | 'running' | 'done'>(() =>
-    introSpin ? 'pending' : 'done',
-  )
-  const introRef = useRef(intro)
-  const introRafRef = useRef(0)
-  const endIntro = () => {
-    cancelAnimationFrame(introRafRef.current)
-    if (introRef.current !== 'done') {
-      introRef.current = 'done'
-      setIntro('done')
-    }
-  }
-
   const armRolodex = () => {
-    // every user-input path (drag, wheel, alpha jump, stepper) arms first —
-    // so the riffle never fights live input
-    endIntro()
     isArmedRef.current = true
     setIsArmed(true)
   }
@@ -116,7 +92,6 @@ export function Rolodex({
     posRef.current = nextPos
     setPos(nextPos)
     if (count === 0) return // an empty deck never reports an index
-    if (introRef.current === 'running') return // riffle notifies once, on settle
     const rounded = clamp(Math.round(nextPos), 0, Math.max(0, count - 1))
     if (rounded !== lastNotifiedRef.current) {
       lastNotifiedRef.current = rounded
@@ -146,10 +121,7 @@ export function Rolodex({
   }, [])
 
   // External jump (e.g. portrait-train click): follow activeIndex prop changes.
-  // The riffle never notifies per frame, so there are no echoes to filter; we
-  // simply don't fight the riffle while it owns the deck.
   useEffect(() => {
-    if (introRef.current !== 'done') return
     const next = clamp(activeIndex, 0, Math.max(0, count - 1))
     if (Math.round(posRef.current) !== next) {
       lastNotifiedRef.current = next
@@ -157,89 +129,8 @@ export function Rolodex({
     }
   }, [activeIndex])
 
-  // Entrance riffle driver. Photos for every card the riffle will show are
-  // decoded FIRST (bounded by a timeout), so the roll flashes real pictures
-  // with zero mid-flight network pops. StrictMode-safe: state survives the
-  // dev double-mount and the effect simply starts over from 'pending'.
+  // Deck reset on tab change (the mount run just confirms the start index).
   useEffect(() => {
-    if (introRef.current === 'done') return
-    if (
-      count <= 1 ||
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
-      document.body.classList.contains('no-motion')
-    ) {
-      endIntro()
-      return
-    }
-    const target = clamp(activeIndex, 0, count - 1)
-    const start = Math.min(count - 1, target + Math.min(16, count - 1))
-    if (start === target) {
-      endIntro()
-      return
-    }
-
-    let alive = true
-    const base = import.meta.env.BASE_URL
-    const srcs: string[] = []
-    for (let i = target; i <= start; i++) {
-      const item = items[i]
-      if (item?.kind === 'person') {
-        const p = item.member.localImage || item.member.image
-        if (p) srcs.push(/^https?:\/\//.test(p) ? p : `${base}${p.replace(/^\/+/, '')}`)
-      }
-    }
-    // park the deck on the start card while photos decode
-    commitPos(start)
-
-    const preload = Promise.all(
-      srcs.map(
-        (src) =>
-          new Promise<void>((resolve) => {
-            const img = new Image()
-            img.onload = () => resolve()
-            img.onerror = () => resolve()
-            img.src = src
-          }),
-      ),
-    )
-    const deadline = new Promise<void>((resolve) => setTimeout(resolve, 650))
-
-    Promise.race([preload, deadline]).then(() => {
-      if (!alive || introRef.current === 'done') return
-      introRef.current = 'running'
-      setIntro('running')
-      const t0 = performance.now()
-      const dur = 1500
-      const tick = (now: number) => {
-        if (!alive || introRef.current !== 'running') return
-        const p = Math.min(1, (now - t0) / dur)
-        const eased = 1 - Math.pow(1 - p, 3)
-        commitPos(start + (target - start) * eased)
-        if (p < 1) {
-          introRafRef.current = requestAnimationFrame(tick)
-        } else {
-          endIntro()
-          // settle: one clean notification with the final card
-          lastNotifiedRef.current = target
-          onActiveIndexChange?.(category, target)
-        }
-      }
-      introRafRef.current = requestAnimationFrame(tick)
-    })
-
-    return () => {
-      alive = false
-      cancelAnimationFrame(introRafRef.current)
-    }
-  }, [])
-
-  // Deck reset on tab change (skip the mount run — the riffle owns it).
-  const deckRef = useRef<{ category: string; count: number } | null>(null)
-  useEffect(() => {
-    const prevDeck = deckRef.current
-    deckRef.current = { category, count }
-    if (!prevDeck) return
-    if (prevDeck.category !== category || prevDeck.count !== count) endIntro()
     const next = clamp(activeIndex, 0, Math.max(0, count - 1))
     lastNotifiedRef.current = Math.round(next)
     releaseRolodex()
@@ -509,7 +400,7 @@ export function Rolodex({
       aria-label="Mox members rolodex"
     >
       <div
-        className={`rolodex-stage${intro !== 'done' ? ' is-riffling' : ''}`}
+        className="rolodex-stage"
         ref={stageRef}
         onPointerDown={handleStagePointerDown}
         onPointerMove={handleStagePointerMove}
@@ -527,9 +418,6 @@ export function Rolodex({
               const isWaitingBehind = offset > 0
               const depth = Math.abs(offset)
               if (!isActive && depth > tailLimit) return null
-              // riffle = cards only: the preview tabs mount once we settle,
-              // so the entrance never pays for strips re-rendering each frame
-              if (intro !== 'done' && !isActive) return null
 
               const tailDepth = Math.max(0, depth - 1)
               const topY = `calc(-${30 + tailDepth * tailStep}px)`

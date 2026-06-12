@@ -32,8 +32,16 @@ export function HomePage() {
           <MoxLogo />
         </h1>
         <p className="vibe-sub">
-          1680 Mission St, San Francisco — a research-focused incubator &amp; community space, for
-          doers of good &amp; masters of craft.
+          <a
+            className="vibe-address"
+            href="https://www.google.com/maps/search/?api=1&query=1680+Mission+St+San+Francisco+CA"
+            target="_blank"
+            rel="noreferrer"
+          >
+            1680 Mission St, San Francisco
+          </a>{' '}
+          — a research-focused incubator &amp; community space, for doers of good &amp; masters of
+          craft.
         </p>
 
         <WordsTrain />

@@ -91,7 +91,6 @@ function PeoplePage({ focusId, focusNonce }: { focusId: string | null; focusNonc
           items={groups[cat]}
           activeIndex={activeByCategory[activeCategory]}
           onActiveIndexChange={handleActiveIndexChange}
-          introSpin={!focusId}
         />
       </div>
     </main>
