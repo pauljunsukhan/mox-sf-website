@@ -633,6 +633,12 @@
   border-color: #3a2f22;
 }
 
+/* Flick glide: slots must track the decaying velocity exactly — the 0.28s
+   easing lags at flick speed and smears cards (same physics as the riffle). */
+.rolodex-stage.is-gliding .slot {
+  transition: none !important;
+}
+
 /* Motion off: stop every ambient animation; trains become hand-scrollable. */
 body.no-motion .train-track {
   animation: none !important;

@@ -74,7 +74,21 @@ export function Rolodex({
   const suppressControlClickRef = useRef(false)
   const alphaScrubPointerRef = useRef<number | null>(null)
 
+  // ---- Flick glide: released drags keep flipping with friction. ----
+  // Finger down = precise 1:1 tracking; release with velocity = the deck
+  // streams past and eases onto a card; any input catches it mid-flight.
+  const glideRafRef = useRef(0)
+  const glideActiveRef = useRef(false)
+  const [isGliding, setIsGliding] = useState(false)
+  const stopGlide = () => {
+    if (!glideActiveRef.current) return
+    cancelAnimationFrame(glideRafRef.current)
+    glideActiveRef.current = false
+    setIsGliding(false)
+  }
+
   const armRolodex = () => {
+    stopGlide() // catching the deck stops the flick
     isArmedRef.current = true
     setIsArmed(true)
   }
@@ -104,6 +118,45 @@ export function Rolodex({
     commitPos(clamped)
   }
 
+  /** v0 in cards-per-frame (16.67ms) — the drag handler's velocity unit. */
+  const startGlide = (v0: number) => {
+    stopGlide()
+    let v = clamp(v0, -1.2, 1.2)
+    if (Math.abs(v) < 0.04) {
+      // barely moving: just ease onto the nearest card
+      setVirtualPos(Math.round(posRef.current))
+      return
+    }
+    glideActiveRef.current = true
+    setIsGliding(true)
+    let last = performance.now()
+    const FRICTION = 0.95 // per 16.67ms frame
+    const tick = (now: number) => {
+      if (!glideActiveRef.current) return
+      const frames = Math.min(3, Math.max(0.25, (now - last) / 16.67))
+      last = now
+      let next = posRef.current + v * frames
+      v *= Math.pow(FRICTION, frames)
+      const max = Math.max(0, count - 1)
+      if (next <= 0 || next >= max) {
+        // hit the end of the deck: land there, done
+        commitPos(clamp(next, 0, max))
+        stopGlide()
+        setVirtualPos(Math.round(posRef.current))
+        return
+      }
+      commitPos(next)
+      if (Math.abs(v) < 0.02) {
+        // slow enough: hand off to the slot easing for the final snap
+        stopGlide()
+        requestAnimationFrame(() => setVirtualPos(Math.round(posRef.current)))
+        return
+      }
+      glideRafRef.current = requestAnimationFrame(tick)
+    }
+    glideRafRef.current = requestAnimationFrame(tick)
+  }
+
   useEffect(() => {
     posRef.current = pos
   }, [pos])
@@ -131,6 +184,7 @@ export function Rolodex({
 
   // Deck reset on tab change (the mount run just confirms the start index).
   useEffect(() => {
+    stopGlide()
     const next = clamp(activeIndex, 0, Math.max(0, count - 1))
     lastNotifiedRef.current = Math.round(next)
     releaseRolodex()
@@ -140,12 +194,18 @@ export function Rolodex({
   useEffect(() => {
     const onWheel = (event: WheelEvent) => {
       if (count <= 1) return
-      // capture across the WHOLE stage — wheeling anywhere on the rolodex
-      // (far preview strips included) spins the deck, never the page
-      if (!pointIsInside(stageRef.current, event.clientX, event.clientY)) {
+      // Same contract as touch: the CARDS capture all scroll, unconditionally
+      // (clamped at the ends, never handed back) — the page scrolls only when
+      // the cursor is outside the deck column. Mirrors mobile exactly.
+      const overDeck =
+        eventTargetHitsSelector(event.target, '.slot, .preview-card') ||
+        pointIsInside(trayRef.current, event.clientX, event.clientY)
+      if (!overDeck) {
         if (isArmedRef.current) releaseRolodex()
         return
       }
+
+      event.preventDefault()
 
       const unit =
         event.deltaMode === WheelEvent.DOM_DELTA_LINE
@@ -156,18 +216,8 @@ export function Rolodex({
       const delta = (event.deltaY * unit) / WHEEL_PX_PER_CARD
       if (Math.abs(delta) < 0.01) return
 
-      // The one hand-back to the page: deck start + scrolling up = the exit
-      // toward the banner/portrait train. Everything else is absorbed, so the
-      // page never jiggles while you ride the deck (including past the end).
-      const atStart = posRef.current <= 0.01 && delta < 0
-      if (atStart) {
-        if (isArmedRef.current) releaseRolodex()
-        return
-      }
-
-      // Auto-arm: wheeling over the drum drives it without needing a prior click.
+      // Auto-arm: wheeling over the deck drives it without needing a prior click.
       if (!isArmedRef.current) armRolodex()
-      event.preventDefault()
       setVirtualPos(posRef.current + delta)
     }
 
@@ -340,7 +390,9 @@ export function Rolodex({
 
     const now = performance.now()
     const dt = Math.max(1, now - drag.lastTime)
-    drag.velocity = -((event.clientY - drag.lastY) / TOUCH_PX_PER_CARD) * (16.67 / dt)
+    const instant = -((event.clientY - drag.lastY) / TOUCH_PX_PER_CARD) * (16.67 / dt)
+    // smooth so a tiny final wiggle doesn't erase a real flick's speed
+    drag.velocity = drag.velocity * 0.25 + instant * 0.75
     drag.lastY = event.clientY
     drag.lastTime = now
   }
@@ -374,8 +426,9 @@ export function Rolodex({
       suppressClickRef.current = false
     }, 0)
 
-    const momentum = clamp(drag.velocity * 7.5, -8, 8)
-    setVirtualPos(Math.round(posRef.current + momentum))
+    // flick: carry the release velocity into a friction glide — cards stream
+    // past and ease onto one, instead of a single instant hop
+    startGlide(drag.velocity)
   }
 
   // pointercancel = the browser claimed the gesture (page scroll). Settle on
@@ -404,7 +457,7 @@ export function Rolodex({
       aria-label="Mox members rolodex"
     >
       <div
-        className="rolodex-stage"
+        className={`rolodex-stage${isGliding ? ' is-gliding' : ''}`}
         ref={stageRef}
         onPointerDown={handleStagePointerDown}
         onPointerMove={handleStagePointerMove}
